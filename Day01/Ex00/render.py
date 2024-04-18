@@ -1,30 +1,43 @@
 import sys
 import os
+import re
 
-def render_template(template_file):
+def replace_patterns(template_content, settings):
+    for key, value in settings.items():
+        placeholder = '{' + key + '}'
+        if placeholder in template_content:
+            template_content = template_content.replace(placeholder, value)
+    return template_content
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python3 render.py <file.template>")
+        return
+
+    template_file = sys.argv[1]
+
     if not template_file.endswith('.template'):
-        raise Exception("Invalid file extension. The file should end with.template")
+        print("Error: Input file must have a .template extension")
+        return
 
     if not os.path.exists(template_file):
-        raise FileNotFoundError("The file does not exist")
+        print("Error: Input file does not exist")
+        return
 
-    if len(sys.argv)!= 2:
-        raise Exception("Wrong number of arguments. The program should be called with one argument")
+    output_file = template_file.replace('.template', '.html')
 
     with open(template_file, 'r') as file:
-        content = file.read()
+        template_content = file.read()
 
-    with open('settings.py', 'r') as file:
-        exec(file.read())
+    settings = {}
+    with open('settings.py', 'r') as settings_file:
+        exec(settings_file.read(), settings)
 
-    rendered_content = content.format(**locals())
+    rendered_content = replace_patterns(template_content, settings)
 
-    html_file = os.path.splitext(template_file)[0] + '.html'
-    with open(html_file, 'w') as file:
+    with open(output_file, 'w') as file:
         file.write(rendered_content)
 
+
 if __name__ == '__main__':
-    try:
-        render_template(sys.argv[1])
-    except Exception as e:
-        print(e)
+    main()
