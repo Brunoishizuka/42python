@@ -4,8 +4,20 @@ import re
 import sys
 
 def get_first_link(url):
-    # Function to retrieve the first valid link from the introduction paragraph of a Wikipedia page
-    # You can implement this function according to the requirements
+    # Fetch the HTML content of the Wikipedia page
+    page_content = get_page_content(url)
+    soup = BeautifulSoup(page_content, 'html.parser')
+
+    # Find the first valid link from the introduction paragraph
+    first_link = None
+    intro_paragraph = soup.find("div", class_="mw-parser-output").find("p")
+    for link in intro_paragraph.find_all("a", href=True):
+        href = link.get("href")
+        if href.startswith("/wiki/") and not href.startswith("/wiki/Help:"):
+            first_link = "https://en.wikipedia.org" + href
+            break
+
+    return first_link
 
 def get_page_content(url):
     # Function to fetch and return the HTML content of a Wikipedia page
@@ -18,9 +30,9 @@ def get_page_content(url):
         sys.exit(1)
 
 def main():
-    start_word = sys.argv[1]
+    start_url = input("Enter the Wikipedia URL: ")
     visited_urls = set()
-    current_url = f"https://en.wikipedia.org/wiki/{start_word}"
+    current_url = start_url
 
     while True:
         if current_url in visited_urls:
@@ -34,15 +46,16 @@ def main():
         # Consider the main title of the page
         # Get the first valid link from the introduction paragraph
         # Implement these steps using BeautifulSoup
+        next_url = get_first_link(current_url)
 
         # Add current URL to visited set
         visited_urls.add(current_url)
 
         # Check termination conditions
         if current_url == "https://en.wikipedia.org/wiki/Philosophy":
-            print(f"{len(visited_urls)} roads from {start_word} to philosophy!")
+            print(f"{len(visited_urls)} roads from {start_url} to philosophy!")
             sys.exit(0)
-        elif no_valid_links:
+        elif next_url is None:
             print("It's a dead end!")
             sys.exit(0)
 
